@@ -1,0 +1,14 @@
+# Build Packer
+## Server
+packer build \
+    -only="centos7-server.*" \
+    -var-file="centos7-var.pkrvars.hcl" \
+    -var="hostname=webserver2" \
+    -var="ip_addr=192.168.56.102" \
+    -on-error=ask \
+     centos7.pkr.hcl
+## Desktop
+packer build -only="centos7-desktop.*" -var-file="centos7-var.pkrvars.hcl" -var="hostname=main-vm" -var="ip_addr=192.168.56.100" -on-error=ask centos7.pkr.hcl
+
+# Validate Packer Configuration
+packer validate -only="centos7-server.*" -var-file="centos7-var.pkrvars.hcl" -var="hostname=webserver2" -var="ip_addr=192.168.56.102" centos7.pkr.hcl
