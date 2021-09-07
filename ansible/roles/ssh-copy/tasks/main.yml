@@ -1,0 +1,6 @@
+---
+- name: Distribute the SSH key to remote servers
+  authorized_key:
+    user: server
+    key: "{{ lookup('file', '/home/server/.ssh/id_rsa.pub') }}"
+    state: present

@@ -1,0 +1,32 @@
+---
+- name: Setting up SSH service
+  import_playbook: ssh.yml
+
+- name: Setting up Docker and Docker Compose
+  hosts: loadbalancer,webservers
+  roles:
+    - docker
+
+# - name: Setting up Dbservers and replication
+
+- name: Setting up Webserver-1
+  hosts: webserver1
+  roles:
+    - webserver1
+
+- name: Setting up Webserver-2
+  hosts: webserver2
+  roles:
+    - webserver2
+
+- name: Setting up Unison
+  hosts: webservers
+  roles:
+    - unison
+
+- name: Setting up Load balancer
+  hosts: loadbalancer
+  roles:
+    - haproxy
+
+# - name: Setting up monitoring

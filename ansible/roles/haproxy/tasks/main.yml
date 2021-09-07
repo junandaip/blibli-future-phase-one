@@ -1,0 +1,26 @@
+---
+- name: Create a directory 
+  file:
+    path: "{{ haproxy_docker_path }}"
+    state: directory
+    owner: server
+    group: server
+    mode: 0755
+
+- name: Copy the required files to run haproxy
+  copy:
+    src: roles/haproxy/files/
+    dest: "{{ haproxy_docker_path }}"
+    owner: server
+    group: server
+    mode: 0644
+
+- name: Build Haproxy docker image
+  shell:
+    chdir: "{{ haproxy_docker_path }}"
+    cmd: docker build -t haproxy-image .
+
+- name: Create and run a Haproxy container
+  shell:
+    chdir: "{{ haproxy_docker_path }}"
+    cmd: docker run -d --name haproxy-container -p 80:80 --restart=always haproxy-image

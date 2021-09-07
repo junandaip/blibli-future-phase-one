@@ -1,0 +1,25 @@
+[controller]
+control-node ansible_connection=local
+
+[loadbalancer]
+haproxy
+
+[webserver1]
+web1
+
+[webserver2]
+web2
+
+[webservers:children]
+webserver1
+webserver2
+
+[dbserver1]
+db1
+
+[dbserver2]
+db2
+
+[dbservers:children]
+dbserver1
+dbserver2
