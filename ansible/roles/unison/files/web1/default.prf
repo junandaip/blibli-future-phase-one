@@ -3,5 +3,4 @@ root = /home/server/docker/docker-compose/joomla
 root = ssh://web2//home/server/docker/docker-compose/joomla
 batch = true
 auto = true
-# repeat = watch
 logfile = /home/server/.unison/unison.log

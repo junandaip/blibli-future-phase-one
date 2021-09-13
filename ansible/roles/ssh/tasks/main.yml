@@ -1,0 +1,17 @@
+---
+- name: Create a directory 
+  file:
+    path: "~/.ssh"
+    state: directory
+    owner: server
+    group: server
+    mode: 0755
+
+- name: Generate a new SSH key
+  become_user: server
+  openssh_keypair:
+    path: "~/.ssh/{{ ssh_key_filename }}"
+    type: rsa
+    size: 4096
+    state: present
+    force: no

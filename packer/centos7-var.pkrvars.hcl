@@ -1,4 +1,4 @@
-vm_name = "CentOS_7_"
+vm_name = "Blibli_Future_CentOS_7_"
 guest_os_type = "RedHat_64"
 iso_url = "http/CentOS-7-x86_64-DVD-2009.iso"
 iso_checksum = "md5:5a3b0b3f4a6654ee195ec6edb6d938a4"

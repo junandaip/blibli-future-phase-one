@@ -21,7 +21,7 @@ source "virtualbox-iso" "centos-server" {
     headless = "false"
     keep_registered = "true"
     skip_export = "true"
-    output_directory = "${var.vm_name} ${var.hostname}"
+    output_directory = "${var.vm_name}${var.hostname}"
     boot_wait = "10s"
     boot_command =  [
         "<tab>",
@@ -41,8 +41,8 @@ source "virtualbox-iso" "centos-server" {
 }
 
 build {
-    # Build name for the log output in the CLI
-    name = "CentOS_7_Server" 
+    # Build for VM Server
+    name = "Blibli_Future_CentOS_7_Server" 
     sources = [
         "sources.virtualbox-iso.centos-server"
     ]
@@ -60,8 +60,8 @@ build {
 }
 
 build {
-    # Build name for the log output in the CLI
-    name = "CentOS_7_Ansible" 
+    # Build for Ansible Controller Node
+    name = "Blibli_Future_CentOS_7_Ansible" 
     sources = [
         "sources.virtualbox-iso.centos-server"
     ]
@@ -74,7 +74,8 @@ build {
             "hostnamectl set-hostname ${var.hostname}",
             "nmcli con mod 'System enp0s8' ipv4.addresses ${var.ip_addr}/24",
             "chown -R server:server /home/server/ansible",
-            "chmod 755 /home/server/ansible/start-ansible.sh" 
+            "find /home/server/ansible -type d -exec chmod 755 {} +",
+            "chmod 755 /home/server/ansible/start-ansible.sh"
         ]
     }
     provisioner "shell" {

@@ -2,13 +2,12 @@ FROM alpine:3.14
 
 # Timezone
 ENV TIMEZONE="Asia/Jakarta"
-ENV HAPROXY_VER=2.4.3-r1
 
 RUN apk -U --no-cache add \
     tar \
     wget \
     curl \
-    haproxy=${HAPROXY_VER}
+    haproxy
 
 # Timezone setting for the system
 RUN apk -U --no-cache add tzdata && \

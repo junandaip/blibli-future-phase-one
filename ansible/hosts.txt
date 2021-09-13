@@ -1,5 +1,5 @@
 [controller]
-control-node ansible_connection=local
+control-node
 
 [loadbalancer]
 haproxy
@@ -10,16 +10,16 @@ web1
 [webserver2]
 web2
 
-[webservers:children]
+[all_webservers:children]
 webserver1
 webserver2
 
-[dbserver1]
+[db_master]
 db1
 
-[dbserver2]
+[db_slave]
 db2
 
-[dbservers:children]
-dbserver1
-dbserver2
+[all_dbservers:children]
+db_master
+db_slave

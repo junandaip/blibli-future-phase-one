@@ -1,0 +1,32 @@
+---
+- name: Starting pgpool service
+  become: yes
+  service:
+    name: pgpool
+    state: started
+    enabled: no
+
+- name: Sleep for 180 seconds and continue with play
+  wait_for:
+    timeout: 180
+
+- name: Run online recovery
+  become: yes
+  become_user: postgres
+  shell:
+    cmd: pcp_recovery_node -h vip -p 9898 -U pgpool -n 1 -w
+
+- name: Ensure the database replication is running
+  become: yes
+  become_user: postgres
+  postgresql_query:
+    db: postgres
+    login_host: vip
+    login_user: pgpool
+    login_port: 9999
+    login_password: "{{ db_password }}"
+    query: show pool_nodes
+  register: nodes_status
+
+- name: Show node status
+  debug: var=nodes_status.query_result

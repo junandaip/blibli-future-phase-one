@@ -1,0 +1,14 @@
+pg_version: '13'
+pg_repo: 'https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm'
+pgpool_repo: 'https://www.pgpool.net/yum/rpms/4.2/redhat/rhel-7-x86_64/pgpool-II-release-4.2-1.noarch.rpm'
+pg_archive_dir: '/var/lib/pgsql/archivedir'
+pg_data_dir: '/var/lib/pgsql/13/data'
+pg_home_dir: '/var/lib/pgsql'
+db_password: "{{ vault_db_password }}"
+
+pgpool_dir: '/etc/pgpool-II'
+pgpool_log_dir: '/var/log/pgpool_log'
+
+pgpool_key: "{{ vault_pgpoolkey }}"
+pcppass: "{{ vault_pcppass }}"
+pool_pass: "{{ vault_pool_passwd }}"

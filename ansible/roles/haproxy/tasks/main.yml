@@ -24,3 +24,10 @@
   shell:
     chdir: "{{ haproxy_docker_path }}"
     cmd: docker run -d --name haproxy-container -p 80:80 --restart=always haproxy-image
+
+- name: Opening port for web service
+  become: yes
+  command: "firewall-cmd {{ item }}"
+  with_items:
+  - --permanent --zone=public --add-port=80/tcp
+  - --reload

@@ -1,0 +1,206 @@
+---
+- name: Adding Postgres and Pgpool-II repository
+  become: yes
+  yum:
+    name: 
+      - "{{ pg_repo }}"
+      - "{{ pgpool_repo }}"
+    state: present
+
+- name: "Installing Postgres-{{ pg_version }} and Pgpool-II"
+  become: yes
+  yum:
+    name: 
+      - "postgresql{{ pg_version }}-server"
+      - "pgpool-II-pg{{ pg_version }}-*"
+      - python-psycopg2
+    state: present
+
+- name: Creating archive directory for postgres
+  become: yes
+  file:
+    path: "{{ pg_archive_dir }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: 0755
+
+- name: Initializing Database
+  become: yes
+  command: sudo /usr/pgsql-{{ pg_version }}/bin/postgresql-{{ pg_version }}-setup initdb
+
+- name: Change the owner of pgpool-II directory
+  become: yes
+  command: chown -R postgres:postgres {{ pgpool_dir }}
+
+- name: Generate a new SSH key for default user
+  openssh_keypair:
+    path: "~/.ssh/id_rsa_pgpool"
+    state: present
+    force: no
+
+- name: fetch all public ssh keys
+  shell: cat ~/.ssh/id_rsa_pgpool.pub
+  register: ssh_keys_default
+
+- name: deploy keys on all servers
+  become: yes
+  authorized_key: user=postgres key="{{ item[0] }}"
+  delegate_to: "{{ item[1] }}"
+  with_nested:
+    - "{{ ssh_keys_default.stdout }}"
+    - "{{groups['all_dbservers']}}"
+
+- name: Generate a new SSH key for Postgres user
+  become: yes
+  become_user: postgres
+  openssh_keypair:
+    path: "~/.ssh/id_rsa_pgpool"
+    state: present
+    force: no
+
+- name: fetch all public ssh keys
+  become: yes
+  become_user: postgres
+  shell: cat ~/.ssh/id_rsa_pgpool.pub
+  register: ssh_keys_pg
+
+- name: deploy keys on all servers
+  become: yes
+  authorized_key: user=postgres key="{{ item[0] }}"
+  delegate_to: "{{ item[1] }}"
+  with_nested:
+    - "{{ ssh_keys_pg.stdout }}"
+    - "{{groups['all_dbservers']}}"
+
+- name: Copying postgresql.conf and pg_hba.conf
+  become: yes
+  copy:
+    src: postgresql/{{ item }}
+    dest: "{{ pg_data_dir }}"
+    owner: postgres
+    group: postgres
+    mode: 0700
+  with_items:
+  - postgresql.conf
+  - pg_hba.conf
+
+- name: Copying pgpool scripts for auto failover
+  become: yes
+  copy:
+    src: postgresql/{{ item }}
+    dest: "{{ pg_data_dir }}"
+    owner: postgres
+    group: postgres
+    mode: 0755
+  with_items:
+  - pgpool_remote_start
+  - recovery_1st_stage
+
+- name: copy pgpool keys to pghome directory
+  become: yes
+  template:
+    src: "postgresql/{{ item.src }}"
+    dest: "{{ pg_home_dir }}/{{ item.dest }}"
+    owner: postgres
+    group: postgres
+    mode: 0600
+  loop:
+    - { src: '.pcppass.j2', dest: '.pcppass' }
+    - { src: '.pgpass.j2', dest: '.pgpass' }
+    - { src: '.pgpoolkey.j2', dest: '.pgpoolkey' }
+
+- name: Copying bash profile
+  become: yes
+  copy:
+    src: postgresql/.bash_profile
+    dest: "{{ pg_home_dir }}"
+    owner: postgres
+    group: postgres
+    mode: 0700
+
+- name: Execute bash_profile
+  become: yes
+  become_user: postgres
+  shell:
+    cmd: source ~/.bash_profile
+
+- name: Copying pgpool_node_id to db_master
+  become: yes
+  copy:
+    src: pgpool/pgpool_node_id_master
+    dest: "{{ pgpool_dir }}/pgpool_node_id"
+    owner: postgres
+    group: postgres
+    mode: 0600
+  when: inventory_hostname in groups['db_master']
+
+- name: Copying pgpool_node_id to db_slave
+  become: yes
+  copy:
+    src: pgpool/pgpool_node_id_slave
+    dest: "{{ pgpool_dir }}/pgpool_node_id"
+    owner: postgres
+    group: postgres
+    mode: 0600
+  when: inventory_hostname in groups['db_slave']
+
+- name: Copying config files to pgpool directory
+  become: yes
+  copy:
+    src: pgpool/{{ item }}
+    dest: "{{ pgpool_dir }}"
+    owner: postgres
+    group: postgres
+    mode: 0600
+  with_items:
+  - pgpool.conf
+  - pool_hba.conf
+
+- name: Copy pgpool keys to pgpool directory
+  become: yes
+  template:
+    src: "pgpool/{{ item.src }}"
+    dest: "{{ pgpool_dir }}/{{ item.dest }}"
+    owner: postgres
+    group: postgres
+    mode: 0600
+  loop:
+    - { src: 'pcp.conf.j2', dest: 'pcp.conf' }
+    - { src: 'pool_passwd.j2', dest: 'pool_passwd' }
+
+- name: Copying scripts to pgpool directory
+  become: yes
+  copy:
+    src: pgpool/scripts/{{ item }}
+    dest: "{{ pgpool_dir }}"
+    owner: postgres
+    group: postgres
+    mode: 0755
+  with_items:
+  - escalation.sh
+  - failover.sh
+
+- name: Creating log directory
+  become: yes
+  file:
+    path: "{{ pgpool_log_dir }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: 0755
+
+- name: Editing pgpool sysconfig file
+  become: yes
+  lineinfile:
+    path: /etc/sysconfig/pgpool
+    regexp: '^OPTS='
+    line: OPTS=" -D -n"
+
+- name: Adding PostgreSQL Service and the required ports to Firewall
+  become: yes
+  command: "firewall-cmd {{ item }}"
+  with_items:
+  - --permanent --add-service=postgresql --zone=public
+  - --permanent --zone=public --add-port=9999/tcp --add-port=9898/tcp --add-port=9000/tcp  --add-port=9694/udp
+  - --reload

@@ -15,7 +15,7 @@
   delegate_to: "{{ item[1] }}"
   with_nested:
     - "{{ ssh_keys.stdout }}"
-    - "{{groups['webservers']}}"
+    - "{{groups['all_webservers']}}"
   tags:
     - ssh
 
@@ -46,7 +46,7 @@
     owner: server
     group: server
     mode: 0644
-  delegate_to: "{{groups['webservers'][0]}}"
+  delegate_to: "{{groups['all_webservers'][0]}}"
 
 - name: Copy the default file for Unison in webserver-2
   copy:
@@ -55,10 +55,10 @@
     owner: server
     group: server
     mode: 0644
-  delegate_to: "{{groups['webservers'][1]}}"
+  delegate_to: "{{groups['all_webservers'][1]}}"
 
 - name: Run Unison automatically using cronjob
   cron:
     name: Run Unison
-    job: /usr/bin/unison -repeat 10
+    job: for i in {1..6}; do /usr/bin/unison & sleep 10; done
     state: present

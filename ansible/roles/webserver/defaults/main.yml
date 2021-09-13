@@ -1,0 +1,10 @@
+---
+web_docker_path: /home/server/docker
+nr_agent_ver: '9.18.1.303'
+nr_license_key: "{{ vault_nr_license_key }}"
+nr_app_name_1: webserver-joomla-1
+nr_app_name_2: webserver-joomla-2
+nginx_container_name_1: container-nginx-1
+nginx_container_name_2: container-nginx-2
+joomla_container_name_1: container-joomla-1
+joomla_container_name_2: container-joomla-2

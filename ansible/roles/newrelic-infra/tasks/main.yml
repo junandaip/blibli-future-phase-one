@@ -1,0 +1,55 @@
+---
+- name: Add new relic repository
+  become: yes
+  yum_repository:
+    baseurl: "https://download.newrelic.com/infrastructure_agent/linux/yum/el/7/x86_64"
+    gpgcheck: "yes"
+    gpgkey: https://download.newrelic.com/infrastructure_agent/gpg/newrelic-infra.gpg
+    name: 'newrelic-infra'
+    repo_gpgcheck: "yes"
+    state: present
+    description: New Relic Infrastructure
+
+- name: Install new relic agent
+  become: yes
+  yum:
+    name: newrelic-infra
+    state: latest
+
+- name: Setup new relic config
+  become: yes
+  template:
+    src: newrelic-infra.yml.j2
+    dest: "{{ nr_config_file }}"
+    mode: 0600
+
+- name: Copy newrelic log config for common servers
+  become: yes
+  copy:
+    src: common/logging.yml
+    dest: "{{ nr_config_dir }}/logging.d/"
+    mode: 0600
+  when: inventory_hostname in ((groups['controller'] + groups['loadbalancer']))
+
+- name: Copy newrelic log config for webservers
+  become: yes
+  copy:
+    src: webserver/logging.yml
+    dest: "{{ nr_config_dir }}/logging.d/"
+    mode: 0600
+  when: inventory_hostname in groups['all_webservers']
+
+- name: Copy newrelic log config for dbservers
+  become: yes
+  copy:
+    src: webserver/logging.yml
+    dest: "{{ nr_config_dir }}/logging.d/"
+    mode: 0600
+  when: inventory_hostname in groups['all_dbservers']
+
+- name: Start and enable new relic agent
+  become: yes
+  service:
+    name: newrelic-infra
+    state: restarted
+    enabled: "yes"

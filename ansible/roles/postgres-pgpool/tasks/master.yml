@@ -1,0 +1,99 @@
+---
+- name: Starting postgresql service
+  become: yes
+  service:
+    name: postgresql-{{ pg_version }}
+    state: started
+    enabled: no
+
+- name: Add password to postgres role
+  become: yes
+  become_user: postgres
+  postgresql_user: 
+    name: postgres
+    password: "{{ db_password }}"
+    login_password: "{{ db_password }}"
+    state: present
+
+- name: Install postgresql database extension
+  become: yes
+  become_user: postgres
+  postgresql_ext:
+    name: pgpool_recovery
+    db: template1
+    login_password: "{{ db_password }}"
+
+- name: retarting postgresql service
+  become: yes
+  service:
+    name: postgresql-{{ pg_version }}
+    state: restarted
+    enabled: no
+
+- name: Starting pgpool service
+  become: yes
+  service:
+    name: pgpool
+    state: started
+    enabled: no
+
+- name: Create pgpool role with login
+  become: yes
+  become_user: postgres
+  postgresql_user: 
+    name: pgpool
+    password: "{{ db_password }}"
+    role_attr_flags: LOGIN
+    login_password: "{{ db_password }}"
+    state: present
+
+- name: Add pgpool to pg_monitor group
+  become: yes
+  become_user: postgres
+  postgresql_membership:
+    groups: pg_monitor
+    target_roles: pgpool
+    login_user: postgres
+    login_password: "{{ db_password }}"
+    state: present
+
+- name: Create repl role with login and replication
+  become: yes
+  become_user: postgres
+  postgresql_user: 
+    name: repl
+    password: "{{ db_password }}"
+    role_attr_flags: LOGIN,REPLICATION 
+    login_password: "{{ db_password }}"
+    state: present
+
+- name: Create joomla database
+  become: yes
+  become_user: postgres
+  postgresql_db: 
+    name: joomladb
+    template: template1
+    login_password: "{{ db_password }}"
+    state: present
+
+- name: Create joomla database user
+  become: yes
+  become_user: postgres
+  postgresql_user: 
+    db: joomladb
+    name: joomla
+    password: "{{ db_password }}"
+    priv: ALL
+    role_attr_flags: LOGIN
+    login_password: "{{ db_password }}"
+    state: present
+
+- name: Change joomladb owner to joomla user
+  become: yes
+  become_user: postgres
+  postgresql_owner:
+    db: joomladb
+    login_password: "{{ db_password }}"
+    new_owner: joomla
+    obj_name: joomladb
+    obj_type: database

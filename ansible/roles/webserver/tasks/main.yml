@@ -1,0 +1,53 @@
+---
+- name: Create a directory
+  file:
+    path: "{{ web_docker_path }}"
+    state: directory
+    owner: server
+    group: server
+    mode: 0755
+
+- name: Copy the required files to run web server
+  copy:
+    src: roles/webserver/files/
+    dest: "{{ web_docker_path }}"
+    owner: server
+    group: server
+    mode: 0600
+
+- name: Copy docker-compose file webserver 1
+  template:
+    src: "web1/{{ item.src }}"
+    dest: "{{ web_docker_path }}/docker-compose/{{ item.dest }}"
+  loop:
+    - { src: 'docker-compose.yml.j2', dest: 'docker-compose.yml' }
+    - { src: 'nginx.conf.j2', dest: 'nginx.conf' }
+  when: inventory_hostname in groups['webserver1']
+
+- name: Copy docker-compose file to webserver 2
+  template:
+    src: "web2/{{ item.src }}"
+    dest: "{{ web_docker_path }}/docker-compose/{{ item.dest }}"
+  loop:
+    - { src: 'docker-compose.yml.j2', dest: 'docker-compose.yml' }
+    - { src: 'nginx.conf.j2', dest: 'nginx.conf' }
+  when: inventory_hostname in groups['webserver2']
+
+- name: Change permission for docker-entrypoint script
+  file:
+    path: "{{ web_docker_path }}/joomla-php-newrelic/docker-entrypoint.sh"
+    owner: server
+    group: server
+    mode: 0751
+
+- name: Build docker images and run containers using docker-compose
+  shell:
+    chdir: "{{ web_docker_path }}/docker-compose"
+    cmd: docker-compose up -d
+
+- name: Opening port for web service
+  become: yes
+  command: "firewall-cmd {{ item }}"
+  with_items:
+  - --permanent --zone=public --add-port=80/tcp
+  - --reload

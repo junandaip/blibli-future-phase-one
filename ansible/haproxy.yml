@@ -1,6 +1,0 @@
----
-- name: Install Docker and run Haproxy as a container
-  hosts: loadbalancer
-  roles:
-    - docker
-    - haproxy

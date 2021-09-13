@@ -1,0 +1,15 @@
+logs:
+  - name: messages
+    file: /var/log/messages
+  - name: secure
+    file: /var/log/secure
+  - name: yum.log
+    file: /var/log/yum.log
+  - name: containers
+    file: /var/lib/docker/containers/*/*.log
+  - name: newrelic-cli.log
+    file: /root/.newrelic/newrelic-cli.log
+    attributes:
+      newrelic-cli: true
+  - name: systemd log
+    systemd: cupsd

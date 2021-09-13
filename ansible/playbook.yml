@@ -1,32 +1,42 @@
 ---
 - name: Setting up SSH service
-  import_playbook: ssh.yml
+  hosts: all
+  gather_facts: false
+  roles:
+    - ssh
 
 - name: Setting up Docker and Docker Compose
-  hosts: loadbalancer,webservers
+  hosts: loadbalancer,all_webservers
+  gather_facts: false
   roles:
     - docker
 
-# - name: Setting up Dbservers and replication
-
-- name: Setting up Webserver-1
-  hosts: webserver1
+- name: Setting up database and replication
+  hosts: all_dbservers
+  gather_facts: false
   roles:
-    - webserver1
+    - postgres-pgpool
 
-- name: Setting up Webserver-2
-  hosts: webserver2
+- name: Setting up Webservers
+  hosts: all_webservers
+  gather_facts: false
   roles:
-    - webserver2
+    - webserver
 
 - name: Setting up Unison
-  hosts: webservers
+  hosts: all_webservers
+  gather_facts: false
   roles:
     - unison
 
 - name: Setting up Load balancer
   hosts: loadbalancer
+  gather_facts: false
   roles:
     - haproxy
 
-# - name: Setting up monitoring
+- name: Setting up newrelic infrastructure monitoring
+  hosts: all
+  gather_facts: false
+  roles:
+    - newrelic-infra

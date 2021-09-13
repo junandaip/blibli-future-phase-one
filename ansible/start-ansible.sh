@@ -1,7 +1,6 @@
 #!/bin/bash
 
-password="future5"
 workdir=/home/server/ansible
 
 cd $workdir 
-ansible-playbook playbook.yml --extra-vars "ansible_password=${password}"
+ansible-playbook playbook.yml -e @group_vars/vault.yml -vv
