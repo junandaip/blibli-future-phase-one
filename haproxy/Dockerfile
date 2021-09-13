@@ -7,7 +7,7 @@ RUN apk -U --no-cache add \
     tar \
     wget \
     curl \
-    haproxy=2.4.2-r0
+    haproxy
 
 # Timezone setting for the system
 RUN apk -U --no-cache add tzdata && \
